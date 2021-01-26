@@ -6,10 +6,10 @@ import (
 
 type GoldPrice struct {
 	gorm.Model
-	GDate   string
-	GOpen   float32
-	GHigh   float32
-	GLow    float32
-	GClose  float32
-	GVolume float32
+	GDate   string  `json:"gdate"`
+	GOpen   float32 `json:"gopen"`
+	GHigh   float32 `json:"ghigh"`
+	GLow    float32 `json:"glow"`
+	GClose  float32 `json:"gclose"`
+	GVolume float32 `json:"gvolume"`
 }
