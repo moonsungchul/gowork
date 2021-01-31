@@ -6,10 +6,24 @@ import (
 	"strconv"
 	"strings"
 
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 type MysqlStore struct {
+}
+
+func (r MysqlStore) Open(host string, port int16, dbname string,
+	user string, passwd string) *gorm.DB {
+	ss := fmt.Sprintf("%s:%d", host, port)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, passwd, ss, dbname)
+	//dsn := "moonstar:wooag01@tcp(127.0.0.1:3306)/fms_finance?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+	db.AutoMigrate(GoldPrice{})
+	return db
 }
 
 func (r MysqlStore) GetPrices(db *gorm.DB) []GoldPrice {

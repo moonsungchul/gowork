@@ -48,3 +48,15 @@ func Test1(t *testing.T) {
 	assert.Equal(t, len(res), 100)
 
 }
+
+func Test2(t *testing.T) {
+	store := models.MysqlStore{}
+	db := store.Open("127.0.0.1", 3306, "fms_finance", "moonstar", "wooag01")
+
+	all := store.GetPrices(db)
+	count := store.GetPagesTotal(db)
+	fmt.Println(count)
+	fmt.Println(len(all))
+	total := int64(len(all))
+	assert.Equal(t, count, total)
+}
