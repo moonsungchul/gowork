@@ -1,7 +1,6 @@
 package models_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -18,34 +17,43 @@ func Test1(t *testing.T) {
 		panic("failed to connect database")
 	}
 	db.AutoMigrate(&models.GoldPrice{})
+	db.AutoMigrate(&models.UsbEur{})
+	db.AutoMigrate(&models.UsbJpy{})
+	db.AutoMigrate(&models.UsbKrw{})
+	db.AutoMigrate(&models.UsbRub{})
 
-	//infile := "C:/work/data_workspace/finance/src/gold.csv"
-	//kstore := models.MysqlStore{}
-	//store.InsertGoldPrice(infile, db)
+	//infile := "../utils/gold_final.csv"
 	store := models.MysqlStore{}
-	all := store.GetPrices(db)
-
+	db = store.Open("localhost", 3306, "fms_finance", "moonstar", "wooag01")
+	//store.InsertGoldPrice(db, infile)
+	store.InsertUSDaller(db, "C:/work/data_workspace/finance/data/usb_eur.csv", "USBEUR")
+	store.InsertUSDaller(db, "C:/work/data_workspace/finance/data/usb_krw.csv", "USBKRW")
+	store.InsertUSDaller(db, "C:/work/data_workspace/finance/data/usb_rub.csv", "USBRUB")
+	store.InsertUSDaller(db, "C:/work/data_workspace/finance/data/usb_jpy.csv", "USBJPY")
+	//store := models.MysqlStore{}
 	/*
-		for _, value := range allusers {
-			fmt.Println(value)
+		all := store.GetPrices(db)
+
+			for _, value := range allusers {
+				fmt.Println(value)
+			}
+
+		count := store.GetPagesTotal(db)
+		fmt.Println(count)
+		fmt.Println(len(all))
+		total := int64(len(all))
+		assert.Equal(t, count, total)
+
+		res := store.GetPricesPages(db, 10, 100)
+		for _, value := range res {
+			jj, err := json.Marshal(&value)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(string(jj))
 		}
+		assert.Equal(t, len(res), 100)
 	*/
-
-	count := store.GetPagesTotal(db)
-	fmt.Println(count)
-	fmt.Println(len(all))
-	total := int64(len(all))
-	assert.Equal(t, count, total)
-
-	res := store.GetPricesPages(db, 10, 100)
-	for _, value := range res {
-		jj, err := json.Marshal(&value)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println(string(jj))
-	}
-	assert.Equal(t, len(res), 100)
 
 }
 
