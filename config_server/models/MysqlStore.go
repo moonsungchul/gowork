@@ -19,21 +19,26 @@ func (r MysqlStore) Open(host string, port int16, dbname string,
 	if err != nil {
 		panic("failed to connect database")
 	}
-
 	return db
 }
 
-func (r MysqlStore) GetConfigCount(db *gorm.DB, cname string) int64 {
-	var count int64
-	db.Model(&Config{CName: cname}).Count(&count)
-	return count
+func (r MysqlStore) CreateTable(db *gorm.DB) {
+	db.AutoMigrate(&Config{})
+	db.AutoMigrate(&ConfigSection{})
+	db.AutoMigrate(&ConfigProperty{})
+}
+
+func (r MysqlStore) GetConfig(db *gorm.DB, cname string) Config {
+	var cc Config
+	db.Where("c_name = ?", cname).First(&cc)
+	return cc
 }
 
 func (r MysqlStore) InsertConfig(db *gorm.DB, cname string) {
-	cc := Config{CName: cname}
-	co := r.GetConfigCount(db, cname)
-	if co > 0 {
-		db.Create(&cc)
+	cc := r.GetConfig(db, cname)
+	if cc.CName == "" {
+		conf := Config{CName: cname}
+		db.Create(&conf)
 	}
 }
 
@@ -42,19 +47,19 @@ func (r MysqlStore) UpdateConfig(db *gorm.DB, config Config) {
 }
 
 func (r MysqlStore) DeleteConfig(db *gorm.DB, config Config) {
-	db.Delete(&config)
+	db.Delete(&Config{}, config.ID)
 }
 
-func (r MysqlStore) GetSectionCount(db *gorm.DB, config_id uint, section string) int64 {
-	var count int64
-	db.Model(&ConfigSection{ConfigID: config_id, Section: section}).Count(&count)
-	return count
+func (r MysqlStore) GetSection(db *gorm.DB, config_id uint, section string) ConfigSection {
+	var sec ConfigSection
+	db.Where("section = ? and config_id = ?", section, config_id).First(&sec)
+	return sec
 }
 
 func (r MysqlStore) InsertSection(db *gorm.DB, config_id uint, section string) {
 	cc := ConfigSection{ConfigID: config_id, Section: section}
-	co := r.GetSectionCount(db, config_id, section)
-	if co > 0 {
+	hh := r.GetSection(db, config_id, section)
+	if hh.Section == "" {
 		db.Create(&cc)
 	}
 }
@@ -64,19 +69,30 @@ func (r MysqlStore) UpdateSection(db *gorm.DB, sec ConfigSection) {
 }
 
 func (r MysqlStore) DeleteSection(db *gorm.DB, sec ConfigSection) {
-	db.Delete(&sec)
+	db.Delete(&ConfigSection{}, sec.ID)
 }
 
-func (r MysqlStore) GetPropertyCount(db *gorm.DB, config_id uint,
-	sec_id uint, key string) int64 {
-	var count int64
-	db.Model(&ConfigProperty{ConfigID: config_id, SectionID: sec_id, Key: key}).Count(&count)
-	return count
+func (r MysqlStore) GetProperty(db *gorm.DB, config_id uint,
+	sec_id uint, key string) ConfigProperty {
+	var cc ConfigProperty
+	db.Where("config_id = ? and  section_id = ? and s_key = ? ",
+		config_id, sec_id, key).First(&cc)
+	return cc
 }
 
-func (r MysqlStore) InsertPropery(db *gorm.DB, pro ConfigProperty) {
-	co := r.GetPropertyCount(db, pro.ConfigID, pro.SectionID, pro.Key)
-	if co > 0 {
+func (r MysqlStore) InsertProperty(db *gorm.DB, config_id uint, sec_id uint,
+	key string, value string) {
+	hh := r.GetProperty(db, config_id, sec_id, key)
+	if hh.SKey == "" {
+		pro := ConfigProperty{ConfigID: config_id,
+			SectionID: sec_id, SKey: key, Value: value}
+		db.Create(&pro)
+	}
+
+}
+func (r MysqlStore) InsertPropertyObj(db *gorm.DB, pro ConfigProperty) {
+	hh := r.GetProperty(db, pro.ConfigID, pro.SectionID, pro.SKey)
+	if hh.SKey == "" {
 		db.Create(&pro)
 	}
 }
@@ -86,5 +102,52 @@ func (r MysqlStore) UpdateProperty(db *gorm.DB, pro ConfigProperty) {
 }
 
 func (r MysqlStore) DeleteProperty(db *gorm.DB, pro ConfigProperty) {
-	db.Delete(&pro)
+	db.Delete(&ConfigProperty{}, pro.ID)
+}
+
+func (r MysqlStore) GetPropertyValue(db *gorm.DB, cname string,
+	section string, key string) ConfigProperty {
+	conf := r.GetConfig(db, cname)
+	if conf.CName == "" {
+		return ConfigProperty{}
+	}
+	sec := r.GetSection(db, conf.ID, section)
+	if sec.Section == "" {
+		return ConfigProperty{}
+	}
+	return r.GetProperty(db, conf.ID, sec.ID, key)
+}
+
+/*
+func (r MysqlStore) GetConfig(db *gorm.DB, cname string) {
+	conf := r.GetConfig(db, cname)
+	if conf.CName == "" {
+		return ConfigProperty[]
+	}
+}
+*/
+
+/*
+config, section에 해당하는 모든 property들을 리턴한다.
+*/
+func (r MysqlStore) getProperties(db *gorm.DB, cname string, section string) []ConfigProperty {
+	ret := []ConfigProperty{}
+	cc := r.GetConfig(db, cname)
+	if cc.ID == 0 {
+		return ret
+	}
+
+	ss := r.GetSection(db, cc.ID, section)
+	if ss.ID == 0 {
+		return ret
+	}
+
+	db.Where("config_id = ? and section_id = ? ", cc.ID, ss.ID).Find(&ret)
+	return ret
+
+}
+
+func (r MysqlStore) insertConfigValue(db *gorm.DB, cname string,
+	section string, key string, value string) uint {
+
 }
