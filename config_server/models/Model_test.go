@@ -40,5 +40,50 @@ func Test1(t *testing.T) {
 	store.DeleteConfig(db, dat)
 	store.DeleteSection(db, ss)
 	store.DeleteProperty(db, pp)
+}
+
+func Test2(t *testing.T) {
+
+	store := models.MysqlStore{}
+	db := store.Open("172.17.0.3", 3306, "fms_config", "moonstar", "wooag01")
+	store.CreateTable(db)
+
+	store.InsertConfigValue(db, "config1", "section1", "key1", "value1")
+	val := store.GetConfigValue(db, "config1", "section1", "key1")
+	fmt.Println("val : ", val)
+
+	assert.Equal(t, "value1", val.Value)
+
+	db.Exec("DELETE FROM configs")
+	db.Exec("DELETE FROM config_sections")
+	db.Exec("DELETE FROM config_properties")
+}
+
+func Test3(t *testing.T) {
+	store := models.MysqlStore{}
+	db := store.Open("172.17.0.3", 3306, "fms_config", "moonstar", "wooag01")
+	store.CreateTable(db)
+
+	store.InsertConfigValue(db, "config1", "section1", "key1", "value1")
+	store.InsertConfigValue(db, "config1", "section1", "key2", "value2")
+	store.InsertConfigValue(db, "config1", "section1", "key3", "value3")
+	store.InsertConfigValue(db, "config1", "section1", "key4", "value4")
+
+	store.InsertConfigValue(db, "config1", "section2", "key1", "value1")
+	store.InsertConfigValue(db, "config1", "section2", "key2", "value2")
+	store.InsertConfigValue(db, "config1", "section2", "key3", "value3")
+	store.InsertConfigValue(db, "config1", "section2", "key4", "value4")
+
+	ar := store.GetProperties(db, "config1", "section1")
+
+	for i, obj := range ar {
+		fmt.Println(i, obj)
+		ss := fmt.Sprintf("value%d", i+1)
+		assert.Equal(t, obj.Value, ss)
+	}
+
+	db.Exec("DELETE FROM configs")
+	db.Exec("DELETE FROM config_sections")
+	db.Exec("DELETE FROM config_properties")
 
 }

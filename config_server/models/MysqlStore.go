@@ -127,27 +127,64 @@ func (r MysqlStore) GetConfig(db *gorm.DB, cname string) {
 }
 */
 
+func (r MysqlStore) InsertConfigValue(db *gorm.DB, cname string,
+	section string, key string, value string) ConfigProperty {
+
+	conf := r.GetConfig(db, cname)
+	if conf.ID == 0 {
+		r.InsertConfig(db, cname)
+	}
+
+	conf = r.GetConfig(db, cname)
+	sec := r.GetSection(db, conf.ID, section)
+	if sec.ID == 0 {
+		r.InsertSection(db, conf.ID, section)
+	}
+
+	sec = r.GetSection(db, conf.ID, section)
+	pro := r.GetProperty(db, conf.ID, sec.ID, key)
+	if pro.ID == 0 {
+		r.InsertProperty(db, conf.ID, sec.ID, key, value)
+	} else {
+		pro.Value = value
+	}
+	return pro
+}
+
+func (r MysqlStore) GetConfigValue(db *gorm.DB, cname string, section string,
+	key string) ConfigProperty {
+
+	conf := r.GetConfig(db, cname)
+	if conf.ID == 0 {
+		return ConfigProperty{}
+	}
+
+	sec := r.GetSection(db, conf.ID, section)
+	if sec.ID == 0 {
+		return ConfigProperty{}
+	}
+
+	pro := r.GetProperty(db, conf.ID, sec.ID, key)
+	if pro.ID == 0 {
+		return ConfigProperty{}
+	}
+	return pro
+}
+
 /*
 config, section에 해당하는 모든 property들을 리턴한다.
 */
-func (r MysqlStore) getProperties(db *gorm.DB, cname string, section string) []ConfigProperty {
+func (r MysqlStore) GetProperties(db *gorm.DB, cname string, section string) []ConfigProperty {
 	ret := []ConfigProperty{}
 	cc := r.GetConfig(db, cname)
 	if cc.ID == 0 {
 		return ret
 	}
-
 	ss := r.GetSection(db, cc.ID, section)
 	if ss.ID == 0 {
 		return ret
 	}
-
 	db.Where("config_id = ? and section_id = ? ", cc.ID, ss.ID).Find(&ret)
 	return ret
-
-}
-
-func (r MysqlStore) insertConfigValue(db *gorm.DB, cname string,
-	section string, key string, value string) uint {
 
 }
