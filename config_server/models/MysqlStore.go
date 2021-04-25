@@ -8,6 +8,15 @@ import (
 )
 
 type MysqlStore struct {
+	Host   string
+	Port   int16
+	Dbname string
+	User   string
+	Passwd string
+}
+
+func (r MysqlStore) OpenDB() *gorm.DB {
+	return r.Open(r.Host, r.Port, r.Dbname, r.User, r.Passwd)
 }
 
 func (r MysqlStore) Open(host string, port int16, dbname string,
