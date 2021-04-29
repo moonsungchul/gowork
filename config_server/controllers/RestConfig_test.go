@@ -24,6 +24,7 @@ func setupRouter() *gin.Engine {
 	rr := gin.Default()
 	rr.GET("/api/version", r_common.GetVersion)
 	rr.POST("/api/config", r_conf.AddConfig)
+	rr.GET("/api/config/:cname/:section/:key", r_conf.GetConfig)
 	return rr
 }
 
@@ -42,5 +43,16 @@ func TestVetsion(t *testing.T) {
 
 	rr.ServeHTTP(w1, req2)
 	fmt.Println(w1.Body.String())
+	fmt.Println("test unit test ")
+}
+
+func TestGetConfigValue(t *testing.T) {
+	rr := setupRouter()
+
+	w1 := httptest.NewRecorder()
+	req2, _ := http.NewRequest("GET", "/api/config/Test/TestSection/Key1", nil)
+
+	rr.ServeHTTP(w1, req2)
+	fmt.Println(">>>>> :", w1.Body.String())
 	fmt.Println("test unit test ")
 }
