@@ -43,3 +43,19 @@ func (r RestConfig) GetConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, pro)
 
 }
+
+func (r RestConfig) DeleteProperty(c *gin.Context) {
+	cname := c.Params.ByName("cname")
+	section := c.Params.ByName("section")
+	key := c.Params.ByName("key")
+
+	db := r.Store.OpenDB()
+	pro := r.Store.GetConfigValue(db, cname, section, key)
+	if pro.ID == 0 {
+		msg := Msg{MsgID: -100, Message: "지정된 프로퍼티를 찾을 수 없습니다. "}
+		c.JSON(http.StatusOK, msg)
+	}
+	msg := Msg{MsgID: 100, Message: "지정된 프로퍼티를 삭제 했습니다. "}
+	fmt.Println("@@@@@@@@@@ : ", msg)
+	c.JSON(http.StatusOK, msg)
+}
